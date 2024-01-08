@@ -47,6 +47,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -136,6 +137,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #Apps created
 MY_APP = ["DuLieuChuyenDe"]
 INSTALLED_APPS += MY_APP
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:9000",
+    "http://localhost:9001",
+]
 
 GDAL_LIBRARY_PATH = r"C:\Users\khanh\AppData\Roaming\Python\Python311\site-packages\osgeo\gdal304.dll"
 GEOS_LIBRARY_PATH = r'C:\Users\khanh\AppData\Roaming\Python\Python311\site-packages\osgeo\geos_c.dll'

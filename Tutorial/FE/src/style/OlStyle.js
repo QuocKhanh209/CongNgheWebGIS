@@ -5,14 +5,14 @@ export const OlStyle = {
     return [
       new Style({
         fill: new Fill({
-          color: "#00E8B3",
+          color: "rgba(134, 167, 252, 0.3)",
         }),
         stroke: new Stroke({
-          color: '#FF0000',
-          width: 2,
+          color: 'rgb(52, 104, 192)',
+          width: 4,
         }),
         image: new Icon({
-          src: '/img/pointActivate.png',
+          src: '/img/pointActive.png',
           anchor: [0.5, 1],
         })
       })
@@ -27,13 +27,13 @@ export const OlStyle = {
 
       stroke: new Stroke({
         color: "#0023cd",
-        width: 2,
+        width: 4,
       }),
 
       image:
         typeGeo === "Point" ?
           new Icon({
-            src: '/img/pointActivate.png',
+            src: '/img/pointActive.png',
             anchor: [0.5, 1],
           })
           :

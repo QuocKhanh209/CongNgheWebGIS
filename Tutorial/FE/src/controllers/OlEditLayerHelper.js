@@ -21,15 +21,17 @@ export const editLayerHelper = {
     return null;
   },
 
-  addFeatureToSource: (layer, list) => {
+  addFeatureToSource: (layer, list, style) => {
     const source = layer.getSource();
 
-    if (list.lenght > 0) {
+    console.log(list.length);
+
+    if (list.length > 0) {
       source.clear();
 
       list.forEach((item) => {
         let feature = editLayerHelper.createFeature(item);
-
+        feature.setStyle(style);
         source.addFeature(feature)
       })
     }
@@ -38,7 +40,7 @@ export const editLayerHelper = {
   zoomToPoint: (viewMap, item, zoom) => {
     viewMap.animate({
       zoom : zoom,
-      duration: 500,
+      duration: 1000,
       center: item.geometry.coordinates
     })
   }

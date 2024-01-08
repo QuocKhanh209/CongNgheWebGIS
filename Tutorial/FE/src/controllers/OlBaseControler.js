@@ -7,7 +7,7 @@ import { Draw, Modify, Snap } from "ol/interaction";
 
 export default class OlBaseController {
   constructor(map){
-    super(map);
+    Object.assign(this, { map });
   }
 
   createLayer(name, style, opt = {}){
@@ -107,11 +107,11 @@ export default class OlBaseController {
     }
 
     if (me.edit) {
-      me.map.addIntersection(me.edit)
+      me.map.addInteraction(me.edit)
     }
 
     if (me.snap) {
-      me.map.addIntersection(me.snap)
+      me.map.addInteraction(me.snap)
     }
   }
 
@@ -119,12 +119,20 @@ export default class OlBaseController {
     const me = this;
 
     if (me.edit) {
-      me.map.removeIntersection(me.edit);
+      me.map.removeInteraction(me.edit);
       me.edit = null;
     }
 
     if (me.snap) {
-      me.map.removeIntersection(me.snap);
+      me.map.removeInteraction(me.snap);
+    }
+  }
+
+  clear(){
+    const me = this;
+    me.removeIntersection();
+    if (me.source) {
+      me.source.clear();
     }
   }
 }
