@@ -24,8 +24,6 @@ export const editLayerHelper = {
   addFeatureToSource: (layer, list, style) => {
     const source = layer.getSource();
 
-    console.log(list.length);
-
     if (list.length > 0) {
       source.clear();
 

@@ -31,6 +31,9 @@ class DiemSerializer(serializers_gis.GeoFeatureModelSerializer):
     def create(self, validated_data):
         newIns = models.DuLieuDangDiem.objects.create(**validated_data)
         return newIns
+    
+    def update(self, instance, validated_data):
+        return super().update(instance, validated_data)
 
 #Dữ liệu dạng đường    
 class DuongSerializer(serializers_gis.GeoFeatureModelSerializer):

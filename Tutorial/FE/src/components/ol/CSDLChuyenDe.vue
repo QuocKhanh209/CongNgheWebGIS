@@ -1,31 +1,95 @@
 <template>
     <q-card class="q-ma-0">
-      <q-card-section>
-       <q-btn
-          color="primary"
-          icon="add"
-          label="Thêm"
-          @click="addNewFeature"/>
+      <q-card-section class="flex justify-between">
+        <q-input
+          outlined
+          v-model="search"
+          type="search"
+          label="Tìm kiếm">
+          <template v-slot:prepend>
+            <q-icon name="search" />
+          </template>
+        </q-input>
         <q-btn
-        color="primary"
-        icon="add"
-        label="Đo chiều dài"
-        />
-        <q-btn
-        color="primary"
-        icon="add"
-        label="Đo diện tích"
-        />
+            dense
+            color="primary"
+            label="Thêm đối tượng"
+            @click="addNewFeature"/>
       </q-card-section>
       <q-card-section>
-        <MapComponent :heightMap="'calc(100vh - 426px)'"/>
+        <MapComponent :heightMap="showTable ? 'calc(100vh - 426px)' : 'calc(100vh - 170px)'"/>
+        <div class="tool">
+          <q-btn-group>
+            <q-btn
+              round
+              color="secondary"
+              icon="clear"
+              @click="clear">
+              <q-tooltip >
+                Hủy sự kiện
+              </q-tooltip>
+            </q-btn>
+            <q-btn
+              round
+              color="secondary"
+              icon="straighten"
+              @click="getLength">
+              <q-tooltip >
+                Đo chiều dài
+              </q-tooltip>
+            </q-btn>
+            <q-btn
+              round
+              color="secondary"
+              icon="design_services"
+              @click="getArea">
+              <q-tooltip >
+                Đo diện tích
+              </q-tooltip>
+            </q-btn>
+            <q-btn
+              round
+              color="secondary"
+              icon="gps_fixed"
+              @click="selectByMouse">
+              <q-tooltip >
+                Lấy theo điểm
+              </q-tooltip>
+            </q-btn>
+            <q-btn
+              round
+              color="secondary"
+              icon="radio_button_unchecked"
+              @click="selectByCircle">
+              <q-tooltip >
+                Lấy theo vòng tròn
+              </q-tooltip>
+            </q-btn>
+            <q-btn
+              round
+              color="secondary"
+              icon="area_chart"
+              @click="selectByShape">
+              <q-tooltip >
+                Lấy theo vùng
+              </q-tooltip>
+            </q-btn>
+          </q-btn-group>
+        </div>
       </q-card-section>
-      <q-card-section>
+      <q-btn
+        v-if="!showTable"
+        class="show-table"
+        icon="expand_less"
+        @click="showTable = !showTable" />
+      <q-card-section v-if="showTable">
         <q-table
           class="my-table"
           :rows="data"
           :columns="columns"
-          row-key="name"
+          row-key="id"
+          selection="multiple"
+          v-model:selected="selected"
         >
         <template v-slot:body-cell-STT="props">
           <q-td :props="props">
@@ -51,6 +115,7 @@
               no-caps
               flat
               dense
+              @click="saveEdit"
               >
               <q-tooltip>Lưu</q-tooltip>
             </q-btn>
@@ -77,8 +142,8 @@
                 <q-tooltip>Sửa</q-tooltip>
               </q-btn>
               <q-btn
-                color="accent"
-                icon-right="edit_square"
+                color="warning"
+                icon-right="drive_file_rename_outline"
                 no-caps
                 flat
                 dense
@@ -139,10 +204,12 @@ import VectorSource from 'ol/source/Vector';
 import VectorLayer from 'ol/layer/Vector';
 
 import GeoJSON from 'ol/format/GeoJSON';
-import { Draw } from 'ol/interaction';
+import { Draw, Select } from 'ol/interaction';
 import Tooltip from "ol-ext/overlay/Tooltip"
-
+import {Style, Icon, Stroke, Fill } from 'ol/style';
 import service from 'src/utils/request';
+import Source from 'ol/source/Source';
+import { click } from 'ol/events/condition';
 export default {
   name: 'CSDLChuyenDe',
   props: [
@@ -161,6 +228,8 @@ export default {
       editItem: {},
       layerFeature: null,
       layerSource: null,
+      layerSelect: null,
+      selectInteraction: null,
       listFeature: [],
       columns: [
         { name: 'STT', align: 'center', label: 'STT', field: 'STT', sortable: false },
@@ -172,12 +241,19 @@ export default {
       isEdit: false,
       drawPoly: null,
       drawLine: null,
+      showTable: false,
+      layerDrawCircle: null,
+      layerDrawShape: null,
+      drawCircle: null,
+      drawShape: null,
+      selected: [],
+      search: '',
     }
   },
   mounted(){
     this.initData().then(() => {
-      this.onMapBound();
       this.createLayer();
+      this.onMapBound();
     });
 
     this.setUpDraw();
@@ -190,6 +266,7 @@ export default {
       this.drawPoly = new Draw({ type: 'Polygon' });
       me.$map.addInteraction(this.drawPoly);
       this.drawPoly.setActive(false);
+      this.drawLine.setActive(false);
 
       // Add a tooltip
       var tooltip = new Tooltip();
@@ -206,6 +283,20 @@ export default {
       this.drawPoly.on(['change:active','drawend'], tooltip.removeFeature.bind(tooltip));
     },
 
+    getLength(){
+      this.clear();
+      this.drawPoly.setActive(false);
+      this.drawLine.setActive(true);
+      this.$EventBus.emit("change-action", true)
+    },
+
+    getArea(){
+      this.clear();
+      this.drawLine.setActive(false);
+      this.drawPoly.setActive(true);
+      this.$EventBus.emit("change-action", true)
+    },
+
     async initData(){
       try {
         const { data } = await service.get(this.link);
@@ -216,7 +307,6 @@ export default {
           return item;
         })
 
-        console.log(this.data);
       }
       catch (e) {
         console.log(e.message);
@@ -234,6 +324,16 @@ export default {
         );
         editLayerHelper.selectedLayer = this.layerEdit;
       }
+
+      if (!this.layerMarker){
+        this.layerMarker = new VectorLayer({
+          name: 'Marker',
+          source: new VectorSource({}),
+          zIndex: 100,
+          visible: true,
+          map: this.$map
+        });
+      }
     },
 
     createLayer(){
@@ -243,25 +343,26 @@ export default {
         })
 
         this.layerFeature = new VectorLayer({
-          name : 'Layer Feature',
+          name : 'Feature',
           opacity: 1,
           visible : true,
           zIndex: 10,
           source: this.layerSource,
-          map: this.$map
         })
+
+        this.$map.addLayer(this.layerFeature)
       }
 
       if (this.listFeature.length > 0){
-        console.log(this.listFeature)
         editLayerHelper.addFeatureToSource(
           this.layerFeature,
           this.listFeature,
-          OlStyle.getHightlightStyle()
+          OlStyle.getDefaultStyle(this.typeGeo)
         )
       }
     },
     addNewFeature(){
+      this.$EventBus.emit("change-action", true)
       const start = this.onDrawStart;
       const end = this.onDrawEnd;
 
@@ -275,6 +376,7 @@ export default {
     },
 
     editGeometry(item){
+      this.$EventBus.emit("change-action", true)
       this.isEdittingGeometry = true;
       const start = this.onDrawStart;
       const end = this.onModiFyEnd;
@@ -293,7 +395,6 @@ export default {
     },
 
     editFeature(item){
-      console.log(item);
       this.editItem = item;
       this.editData = true;
       this.isEdit = true;
@@ -345,6 +446,7 @@ export default {
       this.editItem = null;
       this.editData = false;
       this.isEdit = false;
+      this.olEditControl.clear();
     },
 
     async deleteItem(id){
@@ -366,7 +468,6 @@ export default {
         delete this.editItem['geometry'];
         delete this.editItem['properties'];
         const { data } = await service.put(this.link + id + "/", { ...this.editItem})
-        console.log(data);
         this.initData().then(() => {
           this.createLayer();
         });
@@ -379,6 +480,109 @@ export default {
         this.editData = false;
         this.editItem = null;
       }
+    },
+
+    selectByCircle(){
+      this.clear();
+      this.$EventBus.emit("change-action", true)
+      this.layerDrawCircle = new VectorLayer({
+        source: new VectorSource({}),
+        map: this.$map
+      })
+
+      this.drawCircle = new Draw({
+        source: this.layerDrawCircle.getSource(),
+        type: 'Circle',
+      })
+
+      this.$map.addInteraction(this.drawCircle);
+
+      this.drawCircle.on("drawstart", this.onSelectStart )
+      this.drawCircle.on("drawend", this.onSelectEnd )
+    },
+
+    selectByShape(){
+      this.clear();
+      this.$EventBus.emit("change-action", true)
+      this.layerDrawShape = new VectorLayer({
+        source: new VectorSource({}),
+        map: this.$map
+      })
+
+      this.drawShape = new Draw({
+        source: this.layerDrawShape.getSource(),
+        type: 'Polygon',
+      })
+
+      this.$map.addInteraction(this.drawShape);
+
+      this.drawShape.on("drawstart", this.onSelectStart )
+      this.drawShape.on("drawend", this.onSelectEnd )
+    },
+
+    onSelectStart(){
+      if (this.layerDrawCircle !== null)
+        this.layerDrawCircle.getSource().clear();
+
+      if (this.layerDrawShape !== null)
+        this.layerDrawShape.getSource().clear();
+
+      this.layerMarker.getSource().clear();
+    },
+
+    onSelectEnd(e){
+      const feature = e.feature;
+      let selectedFeatures = [];
+      this.selected = [];
+
+      this.layerFeature
+        .getSource()
+        .getFeatures()
+        .forEach((item) => {
+          if (
+            feature
+              .getGeometry()
+              .intersectsExtent(item.getGeometry().getExtent())
+          ) {
+            const newFeature = item.clone();
+            const json = new GeoJSON();
+
+
+            json.writeFeatureObject(newFeature);
+            selectedFeatures.push(newFeature);
+            newFeature.setStyle(OlStyle.getHightlightStyle())
+            this.layerMarker.getSource().addFeature(newFeature);
+          }
+        })
+
+      selectedFeatures.forEach((item) => {
+        console.log(item);
+      })
+    },
+
+    selectByMouse(){
+      this.clear();
+      this.$EventBus.emit("change-action", true)
+      this.selectInteraction = new Select({
+        condition: click,
+        style: OlStyle.getDefaultStyle("Point")
+      })
+
+      this.$map.addInteraction(this.selectInteraction);
+
+      this.selectInteraction.on("select", this.onSelectByMouseEnd)
+    },
+
+    onSelectByMouseEnd(e){
+      const selectedFeature = e.selected;
+      selectedFeature.forEach((item) => {
+        const newFeature = item.clone();
+        const json = new GeoJSON();
+
+        json.writeFeatureObject(newFeature);
+        newFeature.setStyle(OlStyle.getHightlightStyle())
+        this.layerMarker.getSource().addFeature(newFeature);
+      })
     },
 
     zoomToFeature(item){
@@ -400,8 +604,34 @@ export default {
 
     clear(){
       this.stop();
+      this.$EventBus.emit("change-action", false)
       this.isEdittingGeometry = false;
       this.editItem = {};
+      this.layerMarker.getSource().clear();
+      if (this.drawLine !== null)
+        this.drawLine.setActive(false);
+      if (this.drawPoly !== null)
+        this.drawPoly.setActive(false);
+
+      if (this.layerDrawCircle !== null){
+        this.layerDrawCircle.getSource().clear();
+      }
+
+      if (this.drawCircle !== null){
+        this.$map.removeInteraction(this.drawCircle);
+      }
+
+      if (this.layerDrawShape !== null){
+        this.layerDrawShape.getSource().clear();
+      }
+
+      if (this.drawShape !== null){
+        this.$map.removeInteraction(this.drawShape);
+      }
+
+      if (this.selectInteraction !== null){
+        this.$map.removeInteraction(this.selectInteraction);
+      }
       // this.layerMarker.getSource().clear();
     }
 
@@ -417,6 +647,18 @@ export default {
 </style> -->
 
 <style lang="sass">
+.show-table
+  position: absolute
+  bottom: 0px
+  background: #fff
+  left: 800px
+
+.tool
+  position: absolute
+  background: #fff
+  top: 120px
+  right: 24px
+
 .my-table
   /* height or max-height is important */
   height: 250px

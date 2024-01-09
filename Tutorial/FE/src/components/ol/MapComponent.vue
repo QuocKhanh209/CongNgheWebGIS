@@ -1,5 +1,21 @@
 <template>
   <div id="map" class="map" :style="{ height: heightMap }"></div>
+  <q-card v-if="popup" class="my-card">
+    <q-card-section class="flex justify-between">
+      <div class="text-h6 text-bold">Thông tin</div>
+      <q-btn
+        color="white"
+        text-color="dark"
+        icon="close"
+        round
+        size="10px"
+        flat
+        @click="popup = false" />
+    </q-card-section>
+    <q-card-section>
+      Tên đối tượng: {{ info?.name }}
+    </q-card-section>
+  </q-card>
 </template>
 
 <script>
@@ -27,6 +43,9 @@ export default {
       map: null,
       dblClickZoomInteraction: null,
       overlay: null,
+      showOverlay: false,
+      isAction: false,
+      popup: false,
     }
   },
 
@@ -63,7 +82,7 @@ export default {
       }),
       interactions: defaultInteractions({
         doubleClickZoom: false,
-      }).extend([]),
+      }).extend([ new DoubleClickZoom() ]),
       controls: defaultControls({
         attribution: false,
         zoom: true,
@@ -72,15 +91,18 @@ export default {
       ])
     })
 
-    // this.overlay = new Overlay({
-    //   element: this.$refs.popup,
-    //   autoPan: false,
-    //   autoPanMargin: 40,
-    //   autoPanAnimation: {
-    //     duration: 250,
-    //   },
-    // })
+    this.overlay = new Overlay({
+      element: this.$refs.overlay,
+      autoPan: false,
+      autoPanMargin: 40,
+      autoPanAnimation: {
+        duration: 250,
+      },
+    })
 
+    this.map.addOverlay(this.overlay)
+
+    this.overlay.setPosition(undefined);
   },
 
   mounted(){
@@ -92,6 +114,10 @@ export default {
     app.appContext.config.globalProperties.$map = me.map;
 
     me.setUpMapClick();
+
+    this.$EventBus.on("change-action", (action) => {
+      this.isAction = action;
+    })
   },
 
   methods: {
@@ -100,25 +126,27 @@ export default {
       const map = me.map;
 
       me.mapClickListenerKey = map.on("click", (evt) => {
-        this.info = {};
+        if (!this.isAction){
+          this.info = {};
+          this.popup = false;
+          const coordinate = evt.coordinate;
 
-        const coordinate = evt.coordinate;
+          let selectedFeatures = me.map.getFeaturesAtPixel(evt.pixel, {
+            hitTolerance: 4,
+          })
 
-        let selectedFeatures = me.map.getFeaturesAtPixel(evt.pixel, {
-          hitTolerance: 4,
-        })
-
-        if (selectedFeatures.length > 0){
-          this.info = selectedFeatures[0].getProperties();
-          delete this.info["geometry"];
-          me.showPopup(coordinate);
-
-          console.log(this.info);
+          if (selectedFeatures.length > 0){
+            this.info = selectedFeatures[0].getProperties();
+            delete this.info["geometry"];
+            me.showPopup(coordinate);
+            this.popup = true;
+          }
         }
       })
     },
 
     showPopup(coordinate){
+      // this.overlay.setPosition(coordinate);
       this.map.getView().animate({
         center: coordinate,
         duration: 300,
@@ -134,4 +162,14 @@ export default {
   height: calc(100vh - 50px);
 }
 
+.overlay{
+  position: absolute;
+}
+
+.my-card{
+  position: absolute;
+  top: 200px;
+  right: 24px;
+  width: 200px;
+}
 </style>

@@ -135,7 +135,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 #Apps created
-MY_APP = ["DuLieuChuyenDe"]
+MY_APP = ["DuLieuChuyenDe", "core"]
 INSTALLED_APPS += MY_APP
 
 CORS_ALLOWED_ORIGINS = [

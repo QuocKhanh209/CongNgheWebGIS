@@ -2,7 +2,7 @@
   "name": "fe",
   "version": "0.0.1",
   "description": "A Quasar Project",
-  "productName": "Quasar App",
+  "productName": "Công nghệ WebGIS",
   "author": "Nguyễn Quốc  Khánh <88977427+QuocKhanh209@users.noreply.github.com>",
   "private": true,
   "scripts": {
