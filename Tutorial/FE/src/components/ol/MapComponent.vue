@@ -38,7 +38,7 @@ export default {
   data(){
     return{
       zoom : 10,
-      center: [105, 21],
+      center: [105.8565, 21.0402],
       info: {},
       map: null,
       dblClickZoomInteraction: null,
@@ -147,9 +147,10 @@ export default {
 
     showPopup(coordinate){
       // this.overlay.setPosition(coordinate);
+      console.log(coordinate);
       this.map.getView().animate({
         center: coordinate,
-        duration: 300,
+        duration: 500,
       })
     }
   }
@@ -157,7 +158,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style>
 #map{
   height: calc(100vh - 50px);
 }
@@ -168,8 +169,15 @@ export default {
 
 .my-card{
   position: absolute;
-  top: 200px;
-  right: 24px;
+  top: 100px;
+  left: 24px;
   width: 200px;
+}
+
+#map .ol-zoom {
+  bottom: .5em;
+  right: .5em;
+  top: auto;
+  left: auto;
 }
 </style>

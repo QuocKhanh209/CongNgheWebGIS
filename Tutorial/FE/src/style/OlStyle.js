@@ -42,5 +42,32 @@ export const OlStyle = {
             })
           })
     })
+  },
+
+  getDrawStyle(typeGeo){
+    return new Style({
+      fill: new Fill({
+        color: "rgba(180, 212, 255, 0.4)",
+      }),
+
+      stroke: new Stroke({
+        color: "rgb(134, 182, 246)",
+        width: 4,
+      }),
+
+      image:
+        typeGeo === "Point" ?
+          new Icon({
+            src: '/img/pointActive.png',
+            anchor: [0.5, 1],
+          })
+          :
+          new Circle({
+            radius: 4,
+            fill: new Fill({
+              color: "#009dff",
+            })
+          })
+    })
   }
 }

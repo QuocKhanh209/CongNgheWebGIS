@@ -37,7 +37,7 @@ export default class OlBaseController {
   createEditLayer(onFeatureChange, onSourceChange, geoType = null){
     const me = this;
 
-    let style = OlStyle.getDefaultStyle(geoType);
+    let style = OlStyle.getDrawStyle(geoType);
 
     const layerEdit = me.createLayer("Edit Layer", style, {
       queryable: true,
@@ -68,7 +68,7 @@ export default class OlBaseController {
 
     switch(editType){
       case 'add': {
-        let style = OlStyle.getDefaultStyle(geoType);
+        let style = OlStyle.getDrawStyle(geoType);
 
         me.edit = new Draw({
           source: me.source,
@@ -87,7 +87,6 @@ export default class OlBaseController {
       }
       case "modify": {
         const featureModify = editLayerHelper.createFeature(item);
-
         me.source.addFeature(featureModify);
         me.edit = new Modify({
           source: me.source,

@@ -2,6 +2,7 @@
     <q-card class="q-ma-0">
       <q-card-section class="flex justify-between">
         <q-input
+          dense
           outlined
           v-model="search"
           type="search"
@@ -10,71 +11,104 @@
             <q-icon name="search" />
           </template>
         </q-input>
+
+        <!-- <q-select
+          clearable
+          outlined
+          dense
+          use-input
+          input-debounce="0"
+          v-model="search"
+          :options="options"
+          @filter="queryName"
+          label="Tìm kiếm">
+          <template v-slot:no-option>
+            <q-item>
+              <q-item-section class="text-grey">
+                No results
+              </q-item-section>
+            </q-item>
+          </template>
+        </q-select> -->
+
         <q-btn
-            dense
-            color="primary"
-            label="Thêm đối tượng"
-            @click="addNewFeature"/>
+          class="text-bold"
+          dense
+          color="primary"
+          label="Thêm đối tượng"
+          @click="addNewFeature"/>
       </q-card-section>
-      <q-card-section>
-        <MapComponent :heightMap="showTable ? 'calc(100vh - 426px)' : 'calc(100vh - 170px)'"/>
-        <div class="tool">
-          <q-btn-group>
-            <q-btn
-              round
-              color="secondary"
-              icon="clear"
-              @click="clear">
-              <q-tooltip >
-                Hủy sự kiện
-              </q-tooltip>
-            </q-btn>
-            <q-btn
-              round
-              color="secondary"
-              icon="straighten"
-              @click="getLength">
-              <q-tooltip >
-                Đo chiều dài
-              </q-tooltip>
-            </q-btn>
-            <q-btn
-              round
-              color="secondary"
-              icon="design_services"
-              @click="getArea">
-              <q-tooltip >
-                Đo diện tích
-              </q-tooltip>
-            </q-btn>
-            <q-btn
-              round
-              color="secondary"
-              icon="gps_fixed"
-              @click="selectByMouse">
-              <q-tooltip >
-                Lấy theo điểm
-              </q-tooltip>
-            </q-btn>
-            <q-btn
-              round
-              color="secondary"
-              icon="radio_button_unchecked"
-              @click="selectByCircle">
-              <q-tooltip >
-                Lấy theo vòng tròn
-              </q-tooltip>
-            </q-btn>
-            <q-btn
-              round
-              color="secondary"
-              icon="area_chart"
-              @click="selectByShape">
-              <q-tooltip >
-                Lấy theo vùng
-              </q-tooltip>
-            </q-btn>
-          </q-btn-group>
+      <q-card-section class="q-pb-none">
+        <MapComponent :heightMap="showTable ? 'calc(100vh - 389px)' : 'calc(100vh - 139px)'"/>
+        <div class="tool flex column">
+          <q-btn
+            class="q-mb-xs"
+            round
+            size="12px"
+            color="secondary"
+            icon="straighten"
+            @click="getLength">
+            <q-tooltip>
+              Đo chiều dài
+            </q-tooltip>
+          </q-btn>
+          <q-btn
+            class="q-mb-xs"
+            round
+            size="12px"
+            color="secondary"
+            icon="design_services"
+            @click="getArea">
+            <q-tooltip>
+              Đo diện tích
+            </q-tooltip>
+          </q-btn>
+          <q-btn
+            class="q-mb-xs"
+            round
+            size="12px"
+            color="secondary"
+            icon="gps_fixed"
+            @click="selectByMouse">
+            <q-tooltip>
+              Lấy theo điểm
+            </q-tooltip>
+          </q-btn>
+          <q-btn
+            class="q-mb-xs"
+            round
+            size="12px"
+            color="secondary"
+            icon="radio_button_unchecked"
+            @click="selectByCircle">
+            <q-tooltip>
+              Lấy theo vòng tròn
+            </q-tooltip>
+          </q-btn>
+          <q-btn
+            class="q-mb-xs"
+            round
+            size="12px"
+            color="secondary"
+            icon="area_chart"
+            @click="selectByShape">
+            <q-tooltip>
+              Lấy theo vùng
+            </q-tooltip>
+          </q-btn>
+          <q-btn
+            class="q-mb-xs"
+            round
+            size="12px"
+            color="secondary"
+            icon="clear"
+            @click="clear">
+            <q-tooltip>
+              Hủy sự kiện
+            </q-tooltip>
+          </q-btn>
+          <!-- <q-btn-group flat>
+          </q-btn-group> -->
         </div>
       </q-card-section>
       <q-btn
@@ -82,7 +116,7 @@
         class="show-table"
         icon="expand_less"
         @click="showTable = !showTable" />
-      <q-card-section v-if="showTable">
+      <q-card-section v-if="showTable" class="q-py-none ">
         <q-table
           class="my-table"
           :rows="data"
@@ -232,9 +266,9 @@ export default {
       selectInteraction: null,
       listFeature: [],
       columns: [
-        { name: 'STT', align: 'center', label: 'STT', field: 'STT', sortable: false },
-        { name: 'action', align: 'center', label: 'Hành động', field: 'action', sortable: false },
-        { name: 'name', align: 'center', label: 'Tên đối tượng', field: 'name', sortable: true },
+        { name: 'STT', align: 'center', label: 'STT', field: 'STT', sortable: false, width: "50px", divider: true},
+        { name: 'name', align: 'center', label: 'Tên đối tượng', field: 'name', sortable: true, divider: true },
+        { name: 'action', align: 'center', label: 'Hành động', field: 'action', sortable: false, width: "200px", divider: true },
       ],
       data: [],
       isEdittingGeometry: false,
@@ -248,6 +282,8 @@ export default {
       drawShape: null,
       selected: [],
       search: '',
+      queryTimeOut: null,
+      options: [],
     }
   },
   mounted(){
@@ -306,7 +342,6 @@ export default {
           item.name = item.properties.name
           return item;
         })
-
       }
       catch (e) {
         console.log(e.message);
@@ -565,8 +600,8 @@ export default {
       this.$EventBus.emit("change-action", true)
       this.selectInteraction = new Select({
         condition: click,
-        style: OlStyle.getDefaultStyle("Point")
       })
+      // style: OlStyle.getDefaultStyle("Point")
 
       this.$map.addInteraction(this.selectInteraction);
 
@@ -575,6 +610,7 @@ export default {
 
     onSelectByMouseEnd(e){
       const selectedFeature = e.selected;
+      this.layerMarker.getSource().clear();
       selectedFeature.forEach((item) => {
         const newFeature = item.clone();
         const json = new GeoJSON();
@@ -604,10 +640,14 @@ export default {
 
     clear(){
       this.stop();
+      this.showTable = false;
       this.$EventBus.emit("change-action", false)
       this.isEdittingGeometry = false;
       this.editItem = {};
       this.layerMarker.getSource().clear();
+      if (this.layerEdit !== null) {
+        this.layerEdit.getSource().clear();
+      }
       if (this.drawLine !== null)
         this.drawLine.setActive(false);
       if (this.drawPoly !== null)
@@ -633,8 +673,47 @@ export default {
         this.$map.removeInteraction(this.selectInteraction);
       }
       // this.layerMarker.getSource().clear();
-    }
+    },
 
+    queryName(val, update){
+      console.log(val, update);
+      clearTimeout(this.queryTimeOut);
+      this.queryTimeOut = setTimeout(async () => {
+        if (this.search !== ''){
+          try {
+            const { data } = await service.get(this.link + `search/?name=${val}`);
+            const features = data.features;
+            if (features.length > 0){
+              console.log(features[0]);
+              this.zoomToFeature(features[0]);
+            }
+          }
+          catch (e) {
+            console.log(e.message);
+          }
+        }
+      }, 500)
+    }
+  },
+
+  watch: {
+    search(){
+      clearTimeout(this.queryTimeOut);
+      this.queryTimeOut = setTimeout(async () => {
+        if (this.search !== ''){
+          try {
+            const { data } = await service.get(this.link + `search/?name=${this.search}`);
+            const features = data.features;
+            if (features.length > 0){
+              this.zoomToFeature(features[0]);
+            }
+          }
+          catch (e) {
+            console.log(e.message);
+          }
+        }
+      }, 500)
+    }
   }
 }
 </script>
@@ -655,7 +734,6 @@ export default {
 
 .tool
   position: absolute
-  background: #fff
   top: 120px
   right: 24px
 
