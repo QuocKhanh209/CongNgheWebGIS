@@ -73,4 +73,6 @@ class VungViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
         
-
+class Model3DViewSet(viewsets.ModelViewSet):
+    queryset = models.Model3D.objects.all()
+    serializer_class = serializers.Model3DSerializer

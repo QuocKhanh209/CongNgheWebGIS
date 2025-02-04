@@ -45,3 +45,17 @@ class DuLieuDangVung(models.Model):
     id = models.AutoField(primary_key=True, verbose_name="Mã vùng")
     name = models.CharField(max_length=100 ,verbose_name="Tên vùng")
     geom = models.PolygonField(verbose_name="Vị trí", srid=4326, null=True)
+
+class Model3D(models.Model):
+    class Meta:
+        verbose_name = "Dữ liệu 3D"
+        default_permissions = ()
+        permissions = [
+            ("view_Model3D", "Xem"),
+            ("add_Model3D", "Thêm"),
+            ("change_Model3D", "Sửa"),
+            ("delete_Model3D", "Xoá"),
+        ]
+    id = models.AutoField(primary_key=True, verbose_name="Mã model")
+    name = models.CharField(max_length=100, verbose_name="Tên model")
+    file = models.FileField(upload_to="models/", verbose_name="Đường dẫn file")

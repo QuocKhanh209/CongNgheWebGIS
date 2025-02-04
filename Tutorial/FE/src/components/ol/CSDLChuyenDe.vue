@@ -45,7 +45,7 @@
             class="q-mb-xs"
             round
             size="12px"
-            color="secondary"
+            color="primary"
             icon="straighten"
             @click="getLength">
             <q-tooltip>
@@ -56,7 +56,7 @@
             class="q-mb-xs"
             round
             size="12px"
-            color="secondary"
+            color="primary"
             icon="design_services"
             @click="getArea">
             <q-tooltip>
@@ -100,7 +100,7 @@
             class="q-mb-xs"
             round
             size="12px"
-            color="secondary"
+            color="red"
             icon="clear"
             @click="clear">
             <q-tooltip>
@@ -239,7 +239,7 @@ import VectorLayer from 'ol/layer/Vector';
 
 import GeoJSON from 'ol/format/GeoJSON';
 import { Draw, Select } from 'ol/interaction';
-import Tooltip from "ol-ext/overlay/Tooltip"
+import Tooltip from "ol-ext/overlay/Tooltip";
 import {Style, Icon, Stroke, Fill } from 'ol/style';
 import service from 'src/utils/request';
 import Source from 'ol/source/Source';
@@ -498,10 +498,12 @@ export default {
 
     async saveEdit(){
       try {
+        // Lấy id của đối tượng đang được chỉnh sửa
         let id = this.editItem['id'];
         delete this.editItem['id'];
         delete this.editItem['geometry'];
         delete this.editItem['properties'];
+        // Sử dụng phương thức PUT để gửi dữ liệu về server
         const { data } = await service.put(this.link + id + "/", { ...this.editItem})
         this.initData().then(() => {
           this.createLayer();
@@ -623,9 +625,12 @@ export default {
 
     zoomToFeature(item){
       this.$map.updateSize();
-
       if (item.geometry.type === 'Point'){
-        editLayerHelper.zoomToPoint(this.$map.getView(), item, 17);
+        this.map.getView().animate({
+          zoom : 17,
+          duration: 1000,
+          center: item.geometry.coordinates
+        })
       }
       else {
         const feature = editLayerHelper.createFeature(item);

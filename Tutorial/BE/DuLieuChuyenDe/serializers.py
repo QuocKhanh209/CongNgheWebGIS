@@ -60,3 +60,12 @@ class VungSerializer(serializers_gis.GeoFeatureModelSerializer):
         newIns = models.DuLieuDangVung.objects.create(**validated_data)
         return newIns
     
+class Model3DSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Model3D
+        fields = "__all__"
+        read_only_fields = ["id"]
+
+    def create(self, validated_data):
+        newIns = models.Model3D.objects.create(**validated_data)
+        return newIns
